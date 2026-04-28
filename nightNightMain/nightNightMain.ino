@@ -36,7 +36,6 @@
 //    Repeat forever (10 min total cycle)
 // ============================================================
 
-#include <Wire.h>
 #include <RTClib.h>          // Adafruit RTClib
 #include <ESP32Servo.h>      // ESP32-specific servo library
 #include "esp_sleep.h"
@@ -173,9 +172,15 @@ void initRTC() {
         rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
     }
 
+    // disable 32K pin since it isn't used
+    rtc.disable32K();
+
     // Ensure both alarms are cleared on fresh start
     rtc.clearAlarm(1);
     rtc.clearAlarm(2);
+
+    // stops oscillation in SQW line, which is needed to set alarm
+    rtc.writeSqwPinMode(DS3231_OFF);
     rtc.disableAlarm(2);  // only using alarm 1
 }
 
