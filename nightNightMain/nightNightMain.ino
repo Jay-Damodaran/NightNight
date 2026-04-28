@@ -56,6 +56,7 @@
 // ── Battery threshold ────────────────────────────────────────
 // 3.265 V real / 2 (divider) = 1632.5 mV → round up to 1633
 #define BATT_LOW_MV       1633
+#define BATT_FULL_MV      2050
 
 // ── Low-battery flash parameters ────────────────────────────
 #define FLASH_ON_US       400000ULL    //  400 ms in microseconds
@@ -80,10 +81,10 @@ void     initRTC();
 void     setNextAlarm();
 void     clearAlarmFlag();
 void     runActuatorTask();
-bool     isBatteryLow();
+bool     batteryLevel();
 void     enterDeepSleep();
 void     lightSleepUs(uint64_t us);
-void     runLowBatteryLoop();
+void     runBatteryLoop();
 
 // ============================================================
 //  setup() — re-runs on every boot AND every deep sleep wake
@@ -100,8 +101,6 @@ void setup() {
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, LOW);
 
-    // ADC pin is input by default — no pinMode needed for A0
-
     // ── Check why we woke up ─────────────────────────────────
     esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
 
@@ -116,10 +115,8 @@ void setup() {
     clearAlarmFlag();
     runActuatorTask();
 
-    if (isBatteryLow()) {
-        // Run low-battery alert loop — never returns
-        runLowBatteryLoop();
-    }
+    // Run low-battery alert loop
+    runBatteryLoop();
 
     // Normal path: re-arm alarm and deep sleep until next 12 AM
     setNextAlarm();
@@ -212,15 +209,16 @@ void runActuatorTask() {
 // ============================================================
 //  Battery check
 // ============================================================
-bool isBatteryLow() {
+bool batteryLevel() {
     // analogReadMilliVolts uses factory eFuse calibration.
-    // Voltage divider (100k + 100k) halves real LiPo voltage.
+    // Voltage divider (10k + 10k) halves real LiPo voltage.
     // Real threshold 3265 mV -> 1633 mV at ADC pin.
     uint32_t mv;
     for(uint8_t i = 0; i < 5; i++) {
         mv += analogReadMilliVolts(BATTERY_PIN);
     }
-    return ((mv / 5) < BATT_LOW_MV);
+    mv /= 5;
+    return (mv < BATT_LOW_MV);
 }
 
 // ============================================================
@@ -241,13 +239,13 @@ void lightSleepUs(uint64_t us) {
 }
 
 // ============================================================
-//  Low-battery alert loop — never returns
+//  Low-battery alert loop
 //  10-minute cycle:
 //    2 min  — flash LED (400ms on / 600ms off × 120)
 //    8 min  — light sleep
 // ============================================================
-void runLowBatteryLoop() {
-    while (true) {
+void runBatteryLoop() {
+    while (batteryLevel()) {
         // ── 2-minute flash window ────────────────────────────
         for (int cycle = 0; cycle < FLASH_CYCLES; cycle++) {
             // LED on — GPIO state persists through light sleep
