@@ -8,10 +8,11 @@
 // ============================================================
 //
 //  Pin assignments
-//    GPIO2  — DS3231 SQW/INT  (ext0 deep-sleep wakeup, active LOW)
-//    GPIO3  — Servo PWM signal (ESP32Servo)
+//    GPIO3  — DS3231 SQW/INT  (ext0 deep-sleep wakeup, active LOW)
+//    GPIO5  — Servo PWM signal (ESP32Servo)
 //    A0     — Battery voltage via 100k+100k divider
-//    D10    — LED + 220Ω resistor to GND (low battery alert)
+//    D8    — RED LED + 330Ω resistor to GND (low battery alert)
+//    GPIO4  — GREEN LED + 330Ω resistor to GND (battery full, RTC GPIO)
 //
 //  I2C (DS3231)
 //    GPIO6  — SDA
@@ -40,14 +41,16 @@
 #include <ESP32Servo.h>      // ESP32-specific servo library
 #include "esp_sleep.h"
 #include "driver/adc.h"
+#include "driver/gpio.h"
 #include "WiFi.h"
 #include "esp_bt.h"
 
 // ── Pin definitions ─────────────────────────────────────────
-#define RTC_INT_PIN       GPIO_NUM_3   // DS3231 SQW → ext0 wakeup
+#define RTC_INT_PIN       3   // DS3231 SQW → ext0 wakeup
 #define SERVO_PIN         5            // GPIO5
 #define BATTERY_PIN       A0           // GPIO0
-#define LED_PIN           D10          // GPIO10
+#define RLED_PIN          8          // GPIO10
+#define GLED_PIN          4          // GPIO4 (RTC GPIO, holds state in deep sleep)
 
 // ── Servo timing (ms) — tune after physical testing ─────────
 #define EXTEND_DELAY_MS   800
@@ -73,6 +76,9 @@
 RTC_DS3231 rtc;
 Servo      actuatorServo;
 
+// -- Battery Level Enum
+enum BatteryLvls {BATTLOW, BATTMED, BATTHIGH};
+
 // ============================================================
 //  Forward declarations
 // ============================================================
@@ -81,7 +87,7 @@ void     initRTC();
 void     setNextAlarm();
 void     clearAlarmFlag();
 void     runActuatorTask();
-bool     batteryLevel();
+uint8_t     batteryLevel();
 void     enterDeepSleep();
 void     lightSleepUs(uint64_t us);
 void     runBatteryLoop();
@@ -98,8 +104,12 @@ void setup() {
     initRTC();
 
     // Configure output pins
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LOW);
+    pinMode(RLED_PIN, OUTPUT);
+    digitalWrite(RLED_PIN, LOW);
+    gpio_deep_sleep_hold_dis();
+    gpio_hold_dis((gpio_num_t)GLED_PIN);
+    pinMode(GLED_PIN, OUTPUT);
+    digitalWrite(GLED_PIN, LOW);
 
     // ── Check why we woke up ─────────────────────────────────
     esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
@@ -119,8 +129,16 @@ void setup() {
     runBatteryLoop();
 
     // Normal path: re-arm alarm and deep sleep until next 12 AM
-    setNextAlarm();
-    enterDeepSleep();
+    if (batteryLevel() == BATTHIGH) {
+        setNextAlarm();
+        gpio_hold_en((gpio_num_t)GLED_PIN);
+        gpio_deep_sleep_hold_en();
+        enterDeepSleep();
+    }
+    else {
+        setNextAlarm();
+        enterDeepSleep();
+    }
 }
 
 // loop() is never reached in normal operation
@@ -209,16 +227,22 @@ void runActuatorTask() {
 // ============================================================
 //  Battery check
 // ============================================================
-bool batteryLevel() {
+uint8_t batteryLevel() {
     // analogReadMilliVolts uses factory eFuse calibration.
     // Voltage divider (10k + 10k) halves real LiPo voltage.
     // Real threshold 3265 mV -> 1633 mV at ADC pin.
-    uint32_t mv;
+    uint32_t mv = 0;
     for(uint8_t i = 0; i < 5; i++) {
         mv += analogReadMilliVolts(BATTERY_PIN);
     }
     mv /= 5;
-    return (mv < BATT_LOW_MV);
+    if (mv < BATT_LOW_MV) {
+        return BATTLOW;
+    }
+    else if (mv >= BATT_FULL_MV) {
+        return BATTHIGH;
+    }
+    return BATTMED;
 }
 
 // ============================================================
@@ -245,19 +269,22 @@ void lightSleepUs(uint64_t us) {
 //    8 min  — light sleep
 // ============================================================
 void runBatteryLoop() {
-    while (batteryLevel()) {
+    while (batteryLevel() == BATTLOW) {
         // ── 2-minute flash window ────────────────────────────
         for (int cycle = 0; cycle < FLASH_CYCLES; cycle++) {
             // LED on — GPIO state persists through light sleep
-            digitalWrite(LED_PIN, HIGH);
+            digitalWrite(RLED_PIN, HIGH);
             lightSleepUs(FLASH_ON_US);
 
             // LED off
-            digitalWrite(LED_PIN, LOW);
+            digitalWrite(RLED_PIN, LOW);
             lightSleepUs(FLASH_OFF_US);
         }
 
         // ── 8-minute rest ────────────────────────────────────
         lightSleepUs(SLEEP_8MIN_US);
+    }
+    if (batteryLevel() == BATTHIGH) {
+        digitalWrite(GLED_PIN, HIGH);
     }
 }
