@@ -47,10 +47,10 @@
 
 // ── Pin definitions ─────────────────────────────────────────
 #define RTC_INT_PIN       3   // DS3231 SQW → ext0 wakeup
-#define SERVO_PIN         5            // GPIO5
+#define SERVO_PIN         D3            // GPIO5
 #define BATTERY_PIN       A0           // GPIO0
-#define RLED_PIN          8          // GPIO10
-#define GLED_PIN          4          // GPIO4 (RTC GPIO, holds state in deep sleep)
+#define GLED_PIN          D8          // GPIO10
+#define RLED_PIN          D2          // GPIO4 (RTC GPIO, holds state in deep sleep)
 
 // ── Servo timing (ms) — tune after physical testing ─────────
 #define EXTEND_DELAY_MS   800
@@ -99,8 +99,6 @@ void setup() {
     disableUnusedPeripherals();
 
     // I2C for DS3231
-    Wire.begin(6, 7);  // SDA=GPIO6, SCL=GPIO7
-
     initRTC();
 
     // Configure output pins
