@@ -5,6 +5,10 @@ NightNight is a portable, convenient attachment for existing light panels that s
 
 ![NightNight Image](NightNightImg.jpg)
 
+## Demo
+
+https://github.com/user-attachments/assets/0a69e3f3-7d46-4c19-8ec1-e0d74f1d1b15
+
 ## Repo Contents
 - **NightNightCircuit** — KiCAD circuit schematic for the NightNight module
 - **nightNightMain** — firmware running on the XIAO ESP32-C3
