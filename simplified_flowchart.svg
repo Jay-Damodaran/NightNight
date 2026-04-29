@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="546" font-family="Arial, sans-serif" font-size="14">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#555"/>
+    </marker>
+  </defs>
+
+  <rect width="700" height="546" fill="#f8fafc" rx="10"/>
+
+  <text x="350" y="26" text-anchor="middle" font-size="15" font-weight="bold" fill="#111827">NightNight — Program Flow</text>
+
+  <!-- WAKE -->
+  <rect x="210" y="46" width="260" height="40" rx="20" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="340" y="71" text-anchor="middle" fill="#3b0764" font-weight="bold">Wake at Midnight</text>
+
+  <line x1="340" y1="86" x2="340" y2="112" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- OPERATE -->
+  <rect x="210" y="112" width="260" height="40" rx="6" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="340" y="126" text-anchor="middle" fill="#1e3a5f" font-weight="bold">Shut off Lights!</text>
+  <text x="340" y="144" text-anchor="middle" fill="#1e3a5f">(Operate Actuator)</text>
+  
+
+
+  <line x1="340" y1="152" x2="340" y2="180" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- BATTERY DIAMOND: center (340,220), hw=160, hh=38 -->
+  <polygon points="340,182 500,220 340,258 180,220" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+  <text x="340" y="216" text-anchor="middle" fill="#451a03" font-size="13">Battery Level?</text>
+  <text x="340" y="232" text-anchor="middle" fill="#6b4600" font-size="11">Low / Medium / Full</text>
+
+  <!-- LOW: corner left then down -->
+  <path d="M 180,220 L 75,220 L 75,308" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="125" y="212" text-anchor="middle" fill="#666" font-size="12">Low</text>
+
+  <!-- FLASH BOX -->
+  <rect x="13" y="308" width="124" height="72" rx="6" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="75" y="330" text-anchor="middle" fill="#7f1d1d" font-weight="bold">Flash Red LED</text>
+  <text x="75" y="348" text-anchor="middle" fill="#991b1b" font-size="12">every 10 min</text>
+  <text x="75" y="365" text-anchor="middle" fill="#991b1b" font-size="11">(until recovered)</text>
+
+  <!-- FLASH → merge -->
+  <line x1="75" y1="380" x2="75" y2="452" stroke="#555" stroke-width="1.5"/>
+  <line x1="75" y1="452" x2="338" y2="452" stroke="#555" stroke-width="1.5"/>
+
+  <!-- MEDIUM: straight down -->
+  <text x="353" y="276" fill="#666" font-size="12">Medium</text>
+  <line x1="340" y1="258" x2="340" y2="452" stroke="#555" stroke-width="1.5"/>
+
+  <!-- FULL: corner right then down -->
+  <path d="M 500,220 L 625,220 L 625,308" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="563" y="212" text-anchor="middle" fill="#666" font-size="12">Full</text>
+
+  <!-- GREEN LED BOX -->
+  <rect x="563" y="308" width="124" height="52" rx="6" fill="#d1fae5" stroke="#059669" stroke-width="1.5"/>
+  <text x="625" y="330" text-anchor="middle" fill="#064e3b" font-weight="bold">Green LED On</text>
+  <text x="625" y="348" text-anchor="middle" fill="#064e3b" font-size="11">(held through sleep)</text>
+
+  <!-- GREEN → merge -->
+  <line x1="625" y1="360" x2="625" y2="452" stroke="#555" stroke-width="1.5"/>
+  <line x1="625" y1="452" x2="342" y2="452" stroke="#555" stroke-width="1.5"/>
+
+  <!-- MERGE → SLEEP -->
+  <line x1="340" y1="452" x2="340" y2="478" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- SLEEP -->
+  <rect x="210" y="478" width="260" height="40" rx="20" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="340" y="503" text-anchor="middle" fill="#14532d" font-weight="bold">Set Alarm &amp; Deep Sleep</text>
+
+</svg>

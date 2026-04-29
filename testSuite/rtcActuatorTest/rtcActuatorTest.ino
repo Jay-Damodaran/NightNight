@@ -49,9 +49,13 @@ void setup() {
     pinMode(RTC_INT_PIN, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(RTC_INT_PIN), onAlarm, FALLING);
 
-    if (!rtc.setAlarm1(rtc.now() + TimeSpan(30), DS3231_A1_Second)) {
+    // if (!rtc.setAlarm1(rtc.now() + TimeSpan(30), DS3231_A1_Second)) {
+    //     Serial.println("Error, alarm wasn't set!");
+    // } 
+    if (!rtc.setAlarm1(rtc.now() + TimeSpan(0, 0, 1, 30), DS3231_A1_Minute)) {
         Serial.println("Error, alarm wasn't set!");
-    } else {
+    } 
+    else {
         char buf[10];
         strcpy(buf, "hh:mm:ss");
         rtc.now().toString(buf);
